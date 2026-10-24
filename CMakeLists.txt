@@ -34,12 +34,12 @@ set_target_properties(smpb_core PROPERTIES CXX_EXTENSIONS OFF)
 # Программа
 option(SMPB_BUILD_APP "Build smpb executable" ${PROJECT_IS_TOP_LEVEL})
 if(SMPB_BUILD_APP)
-  add_executable(smpb main.cpp)
+  add_executable(smpb example/main.cpp)
   target_link_libraries(smpb PRIVATE smpb::core)
   set_target_properties(smpb PROPERTIES CXX_EXTENSIONS OFF)
 
   if(SMPB_ANDROID)
-    target_sources(smpb PRIVATE AndroidFix.cpp)
+    target_sources(smpb PRIVATE example/AndroidFix.cpp)
   endif()
 
   include(GNUInstallDirs)
@@ -51,14 +51,12 @@ if(SMPB_BUILD_APP)
   )
 
   foreach(FILE ${FILES})
-      get_filename_component(FILENAME ${FILE} NAME)
-      
       add_custom_command(
           TARGET smpb POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          "${CMAKE_CURRENT_SOURCE_DIR}/${FILE}"
-          "$<TARGET_FILE_DIR:smpb>/files/${FILENAME}"
-          COMMENT "Copying file ${FILENAME} to build directory..."
+          "${CMAKE_CURRENT_SOURCE_DIR}/files/${FILE}"
+          "$<TARGET_FILE_DIR:smpb>/files/${FILE}"
+          COMMENT "Copying file ${FILE} to build directory..."
       )
   endforeach()
 endif()
