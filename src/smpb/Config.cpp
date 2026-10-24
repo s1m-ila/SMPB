@@ -14,7 +14,7 @@ Config::Config(int argc, char *argv[]) : BaseComponent("Config") {
 }
 
 int Config::init() {
-    auto config = readFile("core.config");
+    auto config = readFile("files/core.config");
 
     switch (config.second) {
         case 0:

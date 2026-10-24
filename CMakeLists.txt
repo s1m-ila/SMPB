@@ -44,4 +44,21 @@ if(SMPB_BUILD_APP)
 
   include(GNUInstallDirs)
   install(TARGETS smpb RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  # Копируем стандартную настройку
+  set(FILES
+      "core.config"
+  )
+
+  foreach(FILE ${FILES})
+      get_filename_component(FILENAME ${FILE} NAME)
+      
+      add_custom_command(
+          TARGET smpb POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          "${CMAKE_CURRENT_SOURCE_DIR}/${FILE}"
+          "$<TARGET_FILE_DIR:smpb>/files/${FILENAME}"
+          COMMENT "Copying file ${FILENAME} to build directory..."
+      )
+  endforeach()
 endif()
