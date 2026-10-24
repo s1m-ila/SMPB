@@ -68,6 +68,13 @@ int BaseComponent::sendTask(std::unique_ptr<BaseTask> task, const std::string& w
     task->setWorkerIdx(core->findComponentIdxByName(workerName));
     return core->processTask(std::move(task));
 }
+int BaseComponent::sendTask(std::unique_ptr<BaseTask> task, int workerIdx) {
+    if (!core) return -ENOSYS;
+    if (!task) return -EINVAL;
+    task->setCreatorIdx(core->findComponentIdxByPtr(this));
+    task->setWorkerIdx(workerIdx);
+    return core->processTask(std::move(task));
+}
 int BaseComponent::processTask(std::unique_ptr<BaseTask> task) {
     // Process task function
     std::cerr << getPrefix() << "Error in " << componentName << "::processTask: This function has not been initialized." << std::endl ;

@@ -44,6 +44,7 @@ public:
 
 
     int sendTask(std::unique_ptr<BaseTask> task, const std::string& workerName); // Send task into core
+    int sendTask(std::unique_ptr<BaseTask> task, int workerIdx);
     virtual int processTask(std::unique_ptr<BaseTask> task);
 
     virtual int init(); // Init function

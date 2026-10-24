@@ -131,7 +131,7 @@ int Core::processTask(std::unique_ptr<BaseTask> task) {
     int workerIdx = task->getWorkerIdx();
     uint32_t taskIdx = task->getIdx();
     const int n = static_cast<int>(componentsList.size());
-if (creatorIdx >= 0 && creatorIdx < n && workerIdx >= 0 && workerIdx < n && componentsList[creatorIdx] && componentsList[workerIdx]) {
+    if (creatorIdx >= 0 && creatorIdx < n && workerIdx >= 0 && workerIdx < n && componentsList[creatorIdx] && componentsList[workerIdx]) {
         BaseComponent& worker = *componentsList[workerIdx];
         int errorCode = callComponent(worker, "processTask", [&] { return worker.processTask(std::move(task)); });
         if (errorCode != 0){
@@ -140,7 +140,7 @@ if (creatorIdx >= 0 && creatorIdx < n && workerIdx >= 0 && workerIdx < n && comp
         }
         return 0;
     }
-    std::cerr << "Error in Core::processTask: The creator Idx or worker Idx is outside the bounds of the component list. Creator idx: " << creatorIdx << ". Worker idx: " << workerIdx << std::endl;
+    std::cerr << "Error in Core::processTask: The creator Idx or worker Idx does not point to a component. Creator idx: " << creatorIdx << ". Worker idx: " << workerIdx << std::endl;
     return -ENOENT;
 }
 
@@ -157,14 +157,14 @@ int Core::processComponentsQueue(){
                 continue;
             }
 
-            componentsList.push_back(std::move(component));
-            BaseComponent* initialized = componentsList.back().get();
+            size_t idx = placeComponent(std::move(component));
+            BaseComponent* initialized = componentsList[idx].get();
 
             int errorCode2 = callComponent(*initialized, "init", [&] { return initialized->init(); });
             if (errorCode2 != 0) {
                 std::cerr << "Critical Error in Core::processComponentsQueue: " << initialized->getName() << "::init return error code " << std::to_string(errorCode2) << ", delete this component" << std::endl;
                 callComponent(*initialized, "death", [&] { initialized->death(); return 0; });
-                componentsList.pop_back();
+                removeComponent(idx);
             }
         }
     }
@@ -172,13 +172,35 @@ int Core::processComponentsQueue(){
     return 0;
 }
 
+size_t Core::placeComponent(std::unique_ptr<BaseComponent> component) {
+    if (freeSlotsCount > 0) {
+        for (size_t i = 0; i < componentsList.size(); i++) {
+            if (!componentsList[i]) {
+                componentsList[i] = std::move(component);
+                freeSlotsCount--;
+                return i;
+            }
+        }
+    }
+    componentsList.push_back(std::move(component));
+    return componentsList.size() - 1;
+}
+
+void Core::removeComponent(size_t idx) {
+    if (idx >= componentsList.size() || !componentsList[idx]) return;
+    componentsList[idx].reset();
+    freeSlotsCount++;
+}
+
 void Core::destroyComponents() {
-    for (auto& component : componentsList) {
-        if (!component) continue;
-        callComponent(*component, "death", [&] { component->death(); return 0; });
-        component.reset();
+    for (size_t i = componentsList.size(); i-- > 0; ) {
+        if (!componentsList[i]) continue;
+        BaseComponent& component = *componentsList[i];
+        callComponent(component, "death", [&] { component.death(); return 0; });
+        componentsList[i].reset();
     }
     componentsList.clear();
+    freeSlotsCount = 0;
 
     while (!componentsQueue.empty()) {
         std::vector<std::unique_ptr<BaseComponent>> pending = std::move(componentsQueue);
@@ -193,16 +215,15 @@ int Core::init(){
 int Core::tick(long long tickCounter){
     processComponentsQueue();
 
-    for (auto it = componentsList.begin(); it != componentsList.end(); ) {
-        BaseComponent& component = **it;
+    for (size_t i = 0; i < componentsList.size(); i++) {
+        if (!componentsList[i]) continue;
+        BaseComponent& component = *componentsList[i];
         int errorCode = callComponent(component, "tick", [&] { return component.tick(tickCounter); });
 
         if (errorCode != 0) {
-            std::cerr << "Critical Error in Core::tick: " << (*it)->getName() << "::tick return error code " << std::to_string(errorCode) << ", delete this component" << std::endl;
+            std::cerr << "Critical Error in Core::tick: " << component.getName() << "::tick return error code " << std::to_string(errorCode) << ", delete this component" << std::endl;
             callComponent(component, "death", [&] { component.death(); return 0; });
-            it = componentsList.erase(it);
-        } else {
-            ++it;
+            removeComponent(i);
         }
     }
 

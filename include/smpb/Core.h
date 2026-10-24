@@ -58,6 +58,8 @@ public:
     int cycle(); // Run cycle
 private:
     int processComponentsQueue();
+    size_t placeComponent(std::unique_ptr<BaseComponent> component);
+    void removeComponent(size_t idx);
     void destroyComponents();
 
     uint32_t ticksPerSecond = 5; // Ticks per second (TPS)
@@ -72,6 +74,7 @@ private:
     // Components list
     std::vector<std::unique_ptr<BaseComponent>> componentsList;
     std::vector<std::unique_ptr<BaseComponent>> componentsQueue;
+    size_t freeSlotsCount = 0;
     //std::vector<std::vector<std::unique_ptr<BaseTask>>> componentsTasksList;
 };
 
