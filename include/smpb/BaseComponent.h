@@ -25,6 +25,7 @@ private:
 
 protected:
     std::string componentName; // Component name
+    int ID = -1; // Component idx
 
 public:
     BaseComponent(std::string name); // Constructor
@@ -42,9 +43,9 @@ public:
     bool Core_isDebugModeEnabled() const; // Is debug mode enabled in core?
     void Core_appendComponent(std::unique_ptr<BaseComponent> component); // Append Component to core
 
-
+    int Core_getComponentIdxByName(const std::string& workerName); // Get component idx from name
     int sendTask(std::unique_ptr<BaseTask> task, const std::string& workerName); // Send task into core
-    int sendTask(std::unique_ptr<BaseTask> task, int workerIdx);
+    int sendTask(std::unique_ptr<BaseTask> task, int workerIdx); // Send task into core
     virtual int processTask(std::unique_ptr<BaseTask> task);
 
     virtual int init(); // Init function

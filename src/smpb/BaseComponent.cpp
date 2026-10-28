@@ -26,6 +26,7 @@ std::string BaseComponent::getPrefix() const {
 int BaseComponent::setCore(Core* t_core) {
     // Set core
     core = t_core;
+    if (core) ID = core->findComponentIdxByPtr(this);
     return 0;
 }
 
@@ -60,18 +61,24 @@ void BaseComponent::Core_appendComponent(std::unique_ptr<BaseComponent> componen
     if (!core) return;
     core->appendComponent(std::move(component));
 }
+int BaseComponent::Core_getComponentIdxByName(const std::string& workerName){
+    // Get component idx from name
+    if (!core) return -1;
+    return core->findComponentIdxByName(workerName);
+}
 int BaseComponent::sendTask(std::unique_ptr<BaseTask> task, const std::string& workerName) {
     // Send task into core
     if (!core) return -ENOSYS;
     if (!task) return -EINVAL;
-    task->setCreatorIdx(core->findComponentIdxByPtr(this));
+    task->setCreatorIdx(ID);
     task->setWorkerIdx(core->findComponentIdxByName(workerName));
     return core->processTask(std::move(task));
 }
 int BaseComponent::sendTask(std::unique_ptr<BaseTask> task, int workerIdx) {
+    // Send task into core
     if (!core) return -ENOSYS;
     if (!task) return -EINVAL;
-    task->setCreatorIdx(core->findComponentIdxByPtr(this));
+    task->setCreatorIdx(ID);
     task->setWorkerIdx(workerIdx);
     return core->processTask(std::move(task));
 }

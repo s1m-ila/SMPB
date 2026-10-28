@@ -150,15 +150,16 @@ int Core::processComponentsQueue(){
         componentsQueue.clear();
 
         for (auto& component : pending) {
-            int errorCode1 = component->setCore(this);
-
-            if (errorCode1 != 0) {
-                std::cerr << "Critical Error in Core::processComponentsQueue: " << component->getName() << "::setCore return error code " << std::to_string(errorCode1) << ", delete this component" << std::endl;
-                continue;
-            }
-
             size_t idx = placeComponent(std::move(component));
             BaseComponent* initialized = componentsList[idx].get();
+
+            int errorCode1 = initialized->setCore(this);
+
+            if (errorCode1 != 0) {
+                std::cerr << "Critical Error in Core::processComponentsQueue: " << initialized->getName() << "::setCore return error code " << std::to_string(errorCode1) << ", delete this component" << std::endl;
+                removeComponent(idx);
+                continue;
+            }
 
             int errorCode2 = callComponent(*initialized, "init", [&] { return initialized->init(); });
             if (errorCode2 != 0) {
