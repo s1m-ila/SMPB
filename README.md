@@ -137,7 +137,7 @@ project(myapp LANGUAGES CXX)
 
 include(FetchContent)
 FetchContent_Declare(smpb
-  GIT_REPOSITORY https://github.com/Artem1123234232/SMPB.git
+  GIT_REPOSITORY https://github.com/s1m-ila/SMPB.git
   GIT_TAG        main
 )
 FetchContent_MakeAvailable(smpb)
@@ -507,4 +507,4 @@ smpb/
 
 ## Лицензия
 
-[MIT](LICENSE) © 2026 Artem1123234232
+[MIT](LICENSE) © 2026 s1m-ila
